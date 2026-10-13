@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# agent-kit/python: автоформат + авто-исправимый линт. Молча правит что может.
+set -eo pipefail
+cd "$(dirname "$0")/.."
+
+if [ $# -gt 0 ]; then
+  uv run ruff format "$@"
+  uv run ruff check --fix "$@" >/dev/null 2>&1 || true
+else
+  uv run ruff format .
+  uv run ruff check --fix . >/dev/null 2>&1 || true
+fi
