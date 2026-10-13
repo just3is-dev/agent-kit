@@ -1,0 +1,16 @@
+{
+  "name": "agent-kit",
+  "owner": {
+    "name": "just3is-dev"
+  },
+  "metadata": {
+    "description": "Локальный marketplace плагина agent-kit"
+  },
+  "plugins": [
+    {
+      "name": "agent-kit",
+      "source": "./",
+      "description": "Лёгкий процесс для проектов, которые разрабатываются вместе с ИИ."
+    }
+  ]
+}

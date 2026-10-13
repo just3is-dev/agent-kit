@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Контракт самого кита: смоук-тест хуков.
+set -eo pipefail
+cd "$(dirname "$0")/.."
+./tests/smoke.sh
