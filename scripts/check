@@ -6,14 +6,14 @@ cd "$(dirname "$0")/.."
 if [ $# -gt 0 ]; then
   for f in "$@"; do
     case "$f" in
-      *.sh|scripts/check|scripts/test|scripts/fix) bash -n "$f" ;;
+      *.sh|*/scripts/check|*/scripts/test|*/scripts/fix) bash -n "$f" ;;
       *.json) python3 -m json.tool "$f" >/dev/null ;;
     esac
   done
   exit 0
 fi
 
-for f in hooks/scripts/*.sh hooks/scripts/lib/*.sh scripts/* tests/*.sh; do
+for f in hooks/scripts/*.sh hooks/scripts/lib/*.sh scripts/* tests/*.sh templates/*/scripts/*; do
   bash -n "$f"
 done
 for f in .claude-plugin/*.json hooks/hooks.json; do

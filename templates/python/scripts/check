@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# agent-kit/python: статические проверки (линт + типы). Окружение — uv.
+set -eo pipefail
+cd "$(dirname "$0")/.."
+
+if [ $# -gt 0 ]; then
+  targets=()
+  for f in "$@"; do
+    case "$f" in
+      *.py) targets+=("$f") ;;
+    esac
+  done
+  [ ${#targets[@]} -gt 0 ] || exit 0
+  uv run ruff check "${targets[@]}"
+  uv run mypy "${targets[@]}"
+else
+  uv run ruff check .
+  uv run mypy .
+fi

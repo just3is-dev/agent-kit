@@ -88,6 +88,35 @@ assert_exit 0 "пропускает обычный push в main" g 'git push ori
 assert_exit 0 "пропускает git status" g 'git status'
 assert_exit 0 "пропускает пустую команду" run_hook guard.sh '{}'
 
+echo "monorepo dispatcher"
+mono="$tmp/mono"; mkdir -p "$mono/scripts" "$mono/apps/web/scripts" "$mono/apps/api/scripts" "$mono/apps/web/src" "$mono/apps/api/src"
+cp "$KIT/templates/monorepo/scripts/"* "$mono/scripts"
+for pkg in web api; do
+  printf '#!/usr/bin/env bash\necho "%s check $*" >> "%s/mono-calls"\n' "$pkg" "$tmp" > "$mono/apps/$pkg/scripts/check"
+  printf '#!/usr/bin/env bash\necho "%s test" >> "%s/mono-calls"\n' "$pkg" "$tmp" > "$mono/apps/$pkg/scripts/test"
+  printf '#!/usr/bin/env bash\necho "%s fix $*" >> "%s/mono-calls"\n' "$pkg" "$tmp" > "$mono/apps/$pkg/scripts/fix"
+  chmod +x "$mono/apps/$pkg/scripts/"*
+done
+chmod +x "$mono/scripts/"*
+echo x > "$mono/apps/web/src/a.ts"
+: > "$tmp/mono-calls"
+assert_exit 0 "check по файлу идёт в свой пакет" "$mono/scripts/check" "$mono/apps/web/src/a.ts"
+grep -q "web check $mono/apps/web/src/a.ts" "$tmp/mono-calls" && ok "web получил файл" || bad "web не получил файл"
+grep -q "api" "$tmp/mono-calls" && bad "api вызван без своих файлов" || ok "api не вызван"
+: > "$tmp/mono-calls"
+assert_exit 0 "check без аргументов — все пакеты" "$mono/scripts/check"
+[ "$(grep -c check "$tmp/mono-calls")" -eq 2 ] && ok "оба пакета проверены" || bad "не все пакеты проверены"
+: > "$tmp/mono-calls"
+assert_exit 0 "test — все пакеты" "$mono/scripts/test"
+[ "$(grep -c test "$tmp/mono-calls")" -eq 2 ] && ok "оба пакета протестированы" || bad "не все пакеты протестированы"
+printf '#!/usr/bin/env bash\nexit 1\n' > "$mono/apps/api/scripts/test"
+assert_exit 1 "падение пакета — провал корня" "$mono/scripts/test"
+
+echo "шаблоны"
+for s in "$KIT"/templates/*/scripts/check "$KIT"/templates/*/scripts/test "$KIT"/templates/*/scripts/fix; do
+  head -3 "$s" | grep -q '^# agent-kit/' && ok "маркер в $(echo "$s" | sed "s|$KIT/templates/||")" || bad "нет маркера agent-kit/<стек> в $s"
+done
+
 echo
 echo "прошло: $pass, упало: $fail"
 [ "$fail" -eq 0 ]

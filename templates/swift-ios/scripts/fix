@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# agent-kit/swift-ios: автоформат. Молча правит что может.
+set -eo pipefail
+script_dir="$(cd "$(dirname "$0")" && pwd)"
+source "$script_dir/lib.sh"
+cd "$script_dir/.."
+
+targets=()
+if [ $# -gt 0 ]; then
+  for f in "$@"; do
+    case "$f" in
+      *.swift) [ -f "$f" ] && targets+=("$f") ;;
+    esac
+  done
+else
+  while IFS= read -r f; do targets+=("$f"); done < <(find_clean '*.swift')
+fi
+
+[ ${#targets[@]} -gt 0 ] || exit 0
+swift format --in-place "${targets[@]}"

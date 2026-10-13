@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# agent-kit/node: все тесты проекта.
+# --passWithNoTests: свежий проект без тестов не блокирует Stop-хук.
+# Тест-раннер берётся из package.json: vitest или jest.
+set -eo pipefail
+cd "$(dirname "$0")/.."
+
+TEST_RUNNER=$(node -e '
+let pkg = {};
+try { pkg = require("./package.json"); } catch (e) {}
+const deps = Object.assign({}, pkg.dependencies, pkg.devDependencies);
+if (deps.vitest) process.stdout.write("vitest");
+else if (deps.jest) process.stdout.write("jest");
+')
+if [ -z "$TEST_RUNNER" ]; then
+  echo "scripts/test: в package.json нет ни vitest, ни jest" >&2
+  exit 1
+fi
+
+if [ "$TEST_RUNNER" = "vitest" ]; then
+  npx vitest run --passWithNoTests
+else
+  npx jest --passWithNoTests
+fi

@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# agent-kit/node: автоформат + авто-исправимый линт. Молча правит что может.
+set -eo pipefail
+cd "$(dirname "$0")/.."
+
+LINT_TOOL=$(node -e '
+let pkg = {};
+try { pkg = require("./package.json"); } catch (e) {}
+const deps = Object.assign({}, pkg.dependencies, pkg.devDependencies);
+if (deps.oxlint) process.stdout.write("oxlint");
+else if (deps.eslint) process.stdout.write("eslint");
+')
+
+if [ $# -gt 0 ]; then
+  npx prettier --write --ignore-unknown "$@"
+  [ -n "$LINT_TOOL" ] && npx "$LINT_TOOL" --fix --no-error-on-unmatched-pattern "$@" >/dev/null 2>&1 || true
+else
+  npx prettier --write --ignore-unknown .
+  [ -n "$LINT_TOOL" ] && npx "$LINT_TOOL" --fix . >/dev/null 2>&1 || true
+fi
