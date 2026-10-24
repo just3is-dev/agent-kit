@@ -138,6 +138,20 @@ contains commands/verify.md 'отсылка' && ok "verify: проверяет �
 contains commands/spec.md '## Спека меняет или забирает критерии закрытой спеки' && ok "spec: раздел про правку закрытых спек" || bad "spec: нет раздела про правку закрытых спек"
 contains commands/spec.md 'одной задачей целиком' && ok "spec: критерий закрывается одной задачей" || bad "spec: нет правила «один критерий — одна задача»"
 contains templates/process/spec-template.md 'ровно в одной задаче' && ok "шаблон спеки: подсказка про одну задачу" || bad "шаблон спеки: нет подсказки про одну задачу"
+[ "$(grep -c 'молча' "$KIT/commands/spec.md")" -eq 1 ] && ok "spec: правило про совет со стороны записано один раз" || bad "spec: правило про совет со стороны пропало или продублировано"
+
+echo "тексты инициализации и документация"
+contains commands/init.md '@types/node' && ok "init: ставит @types/node для astro с vitest" || bad "init: нет @types/node"
+contains commands/init.md 'AGENTS.md' && ok "init: решение про AGENTS.md от генератора" || bad "init: нет решения про AGENTS.md"
+contains commands/verify.md 'lock-файлы' && ok "verify: инфраструктура не считается расхождением" || bad "verify: нет списка инфраструктурных файлов"
+contains templates/base/CLAUDE.md '## Внешние материалы' && ok "CLAUDE.md шаблона: секция про внешние материалы" || bad "CLAUDE.md шаблона: нет секции про внешние материалы"
+contains templates/astro/ci.yml 'playwright install' && ok "astro ci.yml: подсказка про браузер Playwright" || bad "astro ci.yml: нет подсказки про Playwright"
+contains README.md 'settings.local.json' && ok "README: подключение через settings.local.json" || bad "README: нет подключения через settings.local.json"
+contains README.md '"source": "directory"' && ok "README: пример для локального клона (проверенный)" || bad "README: нет примера с directory"
+for f in "$KIT"/commands/*.md; do
+  lines=$(wc -l < "$f" | tr -d ' ')
+  [ "$lines" -le 80 ] && ok "$(basename "$f"): $lines строк (принцип: не длиннее 80)" || bad "$(basename "$f"): $lines строк, больше 80"
+done
 
 echo
 echo "прошло: $pass, упало: $fail"
