@@ -117,6 +117,26 @@ for s in "$KIT"/templates/*/scripts/check "$KIT"/templates/*/scripts/test "$KIT"
   head -3 "$s" | grep -q '^# agent-kit/' && ok "маркер в $(echo "$s" | sed "s|$KIT/templates/||")" || bad "нет маркера agent-kit/<стек> в $s"
 done
 
+echo "тексты процесса"
+# Тексты команд и скилла ссылаются друг на друга: формат имени теста и правила
+# вычёркивания критериев должны совпадать везде, иначе /verify не найдёт тест.
+contains() { grep -qF -- "$2" "$KIT/$1"; }
+for f in skills/tdd/SKILL.md commands/work.md commands/verify.md; do
+  contains "$f" 'SPEC-NNN AC-' && ok "$f: имя теста с номером спеки" || bad "$f: нет формата «SPEC-NNN AC-N:»"
+done
+for f in skills/tdd/SKILL.md commands/work.md; do
+  # Пример имени теста — это «`AC-N: текст`»; голое «`AC-1:`» без текста допустимо как контрпример.
+  grep -qE '`AC-[0-9N]+: ' "$KIT/$f" && bad "$f: пример имени теста без номера спеки" || ok "$f: нет голого «AC-N:» в примерах"
+done
+for f in skills/tdd/SKILL.md commands/work.md; do
+  contains "$f" 'проверен мутацией' && ok "$f: правило про сразу зелёные тесты" || bad "$f: нет правила про мутацию"
+done
+contains skills/tdd/SKILL.md 'вычеркнут в спеке' && ok "tdd: исключение для вычеркнутых критериев" || bad "tdd: нет исключения для вычеркнутых критериев"
+contains commands/verify.md 'отсылка' && ok "verify: проверяет отсылку у зачёркнутых" || bad "verify: не проверяет отсылку у зачёркнутых"
+contains commands/spec.md '## Спека меняет или забирает критерии закрытой спеки' && ok "spec: раздел про правку закрытых спек" || bad "spec: нет раздела про правку закрытых спек"
+contains commands/spec.md 'одной задачей целиком' && ok "spec: критерий закрывается одной задачей" || bad "spec: нет правила «один критерий — одна задача»"
+contains templates/process/spec-template.md 'ровно в одной задаче' && ok "шаблон спеки: подсказка про одну задачу" || bad "шаблон спеки: нет подсказки про одну задачу"
+
 echo
 echo "прошло: $pass, упало: $fail"
 [ "$fail" -eq 0 ]
