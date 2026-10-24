@@ -12,14 +12,16 @@ argument-hint: "[путь] [--local]"
 
 1. **Осмотрись.** Директория — из `$ARGUMENTS` или текущая. Определи, пустая
    она или с кодом, есть ли git, какой стек по маркерам:
-   `package.json` → `node`; `pyproject.toml` → `python`; `Package.swift`,
+   `astro.config.*` → `astro`; иначе `package.json` → `node`; `pyproject.toml` → `python`; `Package.swift`,
    `*.xcodeproj` или `project.yml` → `swift-ios`; маркеры разных стеков в
    поддиректориях (`apps/*`, `services/*`, `packages/*`) → `monorepo`.
    Не очевидно — спроси одним AskUserQuestion. Для пустого проекта там же
    спроси название и одно предложение описания.
 
 2. **Пустой проект — каркас штатным генератором**, не выдумывай структуру:
-   `npx create-next-app@latest`, `npx @nestjs/cli new`, `uv init`.
+   `npx create-next-app@latest`, `npx @nestjs/cli new`,
+   `npm create astro@latest -- --template minimal --typescript strict
+   --no-git --yes`, `uv init`.
    Флаги неинтерактивные. Удали вложенные `.git`, которые создают
    генераторы. Для `swift-ios` генератора нет: минимальный `project.yml`
    для XcodeGen и точка входа, затем `xcodegen generate`.
@@ -50,7 +52,8 @@ argument-hint: "[путь] [--local]"
    пройти из корня. Поставь недостающие dev-зависимости тем менеджером,
    что уже в проекте: для node как минимум typescript, prettier, линтер и
    тест-раннер из тех, что уже выбрал генератор (vitest в проект без Vite
-   требует ещё `vite`). Не завершай инициализацию с красным контрактом.
+   требует ещё `vite`); для astro — `@astrojs/check`, `typescript`,
+   `prettier`, `prettier-plugin-astro`, линтер по желанию. Не завершай инициализацию с красным контрактом.
 
 6. **Git.** Нет репозитория — `git init -b main` и первый коммит
    `chore: подключить agent-kit`. Есть — коммит не делай, оставь

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# agent-kit/astro: smoke «сайт собирается» (astro build) + vitest, если
+# он есть в package.json. Для одностраничника сборка и есть главный тест:
+# битый импорт, ошибка в frontmatter или сломанный layout валят её.
+set -eo pipefail
+cd "$(dirname "$0")/.."
+
+npx astro build
+
+HAS_VITEST=$(node -e '
+let pkg = {};
+try { pkg = require("./package.json"); } catch (e) {}
+const deps = Object.assign({}, pkg.dependencies, pkg.devDependencies);
+if (deps.vitest) process.stdout.write("1");
+')
+[ -n "$HAS_VITEST" ] && npx vitest run --passWithNoTests
+exit 0

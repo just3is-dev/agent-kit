@@ -58,7 +58,9 @@
 
 ## Шаблоны стеков
 
-`node` (tsc + eslint/oxlint + vitest/jest по package.json), `python`
+`node` (tsc + eslint/oxlint + vitest/jest по package.json), `astro`
+(astro check + линтер, если есть; тест — сборка сайта + vitest, если
+есть), `python`
 (uv + ruff + mypy + pytest), `swift-ios` (swift format + SPM + smoke
 xcodebuild), `monorepo` (корневой диспетчер по пакетам). Другой стек —
 скрипты пишутся по образцу с маркером `# agent-kit/<стек>` в первой
