@@ -29,16 +29,21 @@ claude plugin install agent-kit@agent-kit
 
 Локальный клон для разработки плагина: вместо `just3is-dev/agent-kit`
 путь к папке. Либо декларативно, на уровне проекта —
-`.claude/settings.local.json` (в git не коммитится):
+`.claude/settings.local.json` (в git не коммитится). Для локального клона
+так (проверено в десктопном приложении):
 
 ```json
 {
   "extraKnownMarketplaces": {
-    "agent-kit": { "source": { "source": "github", "repo": "just3is-dev/agent-kit" } }
+    "agent-kit": { "source": { "source": "directory", "path": "/путь/к/agent-kit" } }
   },
   "enabledPlugins": { "agent-kit@agent-kit": true }
 }
 ```
+
+Для репозитория на GitHub источник другой (не проверялся):
+`{ "source": "github", "repo": "just3is-dev/agent-kit" }`. Настройки
+читаются при старте сессии: после правки откройте новую.
 
 Команды вызываются с префиксом: `/agent-kit:init`, `/agent-kit:spec` и
 т.д.; ниже для краткости без него.
