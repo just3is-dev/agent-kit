@@ -35,6 +35,9 @@ argument-hint: "[путь] [--local]"
    - `templates/<стек>/ci.yml` → `.github/workflows/ci.yml`, только если в
      `.github/workflows/` пусто. Не при `--local`.
    - `templates/base/gitignore` → допиши в `.gitignore` недостающие строки.
+   - генератор создал `AGENTS.md` — оставь его и добавь в начало
+     `CLAUDE.md` строку «Правила для агентов — в этом файле; `AGENTS.md`
+     сгенерирован стеком, его не редактируем»;
    - `templates/base/CLAUDE.md` → `CLAUDE.md`, заполни `{{плейсхолдеры}}`;
      секцию про миграции удали, если БД нет. Существующий `CLAUDE.md` не
      переписывай: добавь в конец только секции «Контракт» и «Процесс».
@@ -53,7 +56,8 @@ argument-hint: "[путь] [--local]"
    что уже в проекте: для node как минимум typescript, prettier, линтер и
    тест-раннер из тех, что уже выбрал генератор (vitest в проект без Vite
    требует ещё `vite`); для astro — `@astrojs/check`, `typescript`,
-   `prettier`, `prettier-plugin-astro`, линтер по желанию. Не завершай инициализацию с красным контрактом.
+   `prettier`, `prettier-plugin-astro`, линтер по желанию; если тесты на
+   vitest читают файлы или `dist/` через `node:*` — ещё `@types/node`. Не завершай инициализацию с красным контрактом.
 
 6. **Git.** Нет репозитория — `git init -b main` и первый коммит
    `chore: подключить agent-kit`. Есть — коммит не делай, оставь

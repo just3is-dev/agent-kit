@@ -15,5 +15,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Тесты в браузере (Playwright): раскомментируй, иначе test упадёт в CI.
+      # - run: npx playwright install --with-deps chromium
       - run: ./scripts/check
       - run: ./scripts/test

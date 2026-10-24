@@ -87,6 +87,8 @@ assert_exit 0 "пропускает force-with-lease в ветку" g 'git push 
 assert_exit 0 "пропускает обычный push в main" g 'git push origin main'
 assert_exit 0 "пропускает git status" g 'git status'
 assert_exit 0 "пропускает пустую команду" run_hook guard.sh '{}'
+assert_exit 0 "не смотрит в тело heredoc" g 'cat > note.md <<EOF\nзапрещено git commit --no-verify и git push -f origin main\nEOF'
+assert_exit 2 "ловит git перед heredoc" g 'git commit --no-verify -F- <<EOF\nmsg\nEOF'
 
 echo "monorepo dispatcher"
 mono="$tmp/mono"; mkdir -p "$mono/scripts" "$mono/apps/web/scripts" "$mono/apps/api/scripts" "$mono/apps/web/src" "$mono/apps/api/src"

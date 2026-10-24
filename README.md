@@ -19,10 +19,29 @@
 
 ## Установка
 
+Из терминала (работает и для десктопного приложения, где диалога
+`/plugin` нет):
+
 ```
-/plugin marketplace add /путь/к/agent-kit
-/plugin install agent-kit@agent-kit
+claude plugin marketplace add just3is-dev/agent-kit
+claude plugin install agent-kit@agent-kit
 ```
+
+Локальный клон для разработки плагина: вместо `just3is-dev/agent-kit`
+путь к папке. Либо декларативно, на уровне проекта —
+`.claude/settings.local.json` (в git не коммитится):
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "agent-kit": { "source": { "source": "github", "repo": "just3is-dev/agent-kit" } }
+  },
+  "enabledPlugins": { "agent-kit@agent-kit": true }
+}
+```
+
+Команды вызываются с префиксом: `/agent-kit:init`, `/agent-kit:spec` и
+т.д.; ниже для краткости без него.
 
 ## Цикл
 

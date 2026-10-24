@@ -8,6 +8,8 @@ payload=$(cat)
 . "$(cd "$(dirname "$0")" && pwd)/lib/json-field.sh"
 cmd=$(json_field "$payload" "tool_input.command" "")
 [ -n "$cmd" ] || exit 0
+# Тело heredoc не проверяем: там документация, а не команды.
+cmd=${cmd%%<<*}
 
 if printf '%s' "$cmd" | grep -Eq 'git[[:space:]].*--no-verify'; then
   echo "Запрещено: --no-verify обходит проверки. Почини причину, а не обходи гейт." >&2
