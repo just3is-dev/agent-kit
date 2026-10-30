@@ -6,6 +6,19 @@ script_dir="$(cd "$(dirname "$0")" && pwd)"
 source "$script_dir/lib.sh"
 cd "$script_dir/.."
 
+# Пакет собирается, только когда его директории уже на месте: пока агент
+# создаёт файлы по одному, Package.swift без Sources/ или без Tests/ при
+# объявленном testTarget — не ошибка кода, а промежуточное состояние.
+buildable() {
+  [ -d "$1/Sources" ] || return 1
+  ! grep -q 'testTarget' "$1/Package.swift" || [ -d "$1/Tests" ]
+}
+
+# swift build шумит даже с -q; вывод показывается только при ошибке.
+build_quiet() {
+  out=$(swift build --package-path "$1" 2>&1) || { printf '%s\n' "$out" >&2; return 1; }
+}
+
 # Ближайший родительский SPM-пакет файла (пусто — файл вне пакетов).
 package_of() {
   d=$(dirname "$1")
@@ -36,8 +49,8 @@ if [ $# -gt 0 ]; then
   # scripts/test.
   pkgs=$(for f in "${targets[@]}"; do package_of "$f"; done | sort -u)
   while IFS= read -r d; do
-    [ -n "$d" ] || continue
-    swift build --package-path "$d"
+    [ -n "$d" ] && buildable "$d" || continue
+    build_quiet "$d"
   done < <(printf '%s\n' "$pkgs")
 else
   files=()
@@ -48,7 +61,8 @@ else
   # в scripts/test: ей нужны xcodegen/симулятор и минуты, а полный check
   # должен оставаться быстрым гейтом.
   while IFS= read -r pkg; do
-    swift build --package-path "$(dirname "$pkg")"
+    buildable "$(dirname "$pkg")" || continue
+    build_quiet "$(dirname "$pkg")"
   done < <(find_clean 'Package.swift')
 
 fi

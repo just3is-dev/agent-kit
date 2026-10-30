@@ -1,21 +1,30 @@
 #!/usr/bin/env bash
 # agent-kit/node: статические проверки (типы + линт).
 # С аргументами линтит только переданные файлы; типы всегда по проекту.
-# Линтер берётся из package.json: oxlint или eslint.
+# Линтер берётся из package.json (своего или родительского): oxlint или eslint.
 set -eo pipefail
 cd "$(dirname "$0")/.."
 
 npx tsc --noEmit --pretty false
 
 LINT_TOOL=$(node -e '
-let pkg = {};
-try { pkg = require("./package.json"); } catch (e) {}
-const deps = Object.assign({}, pkg.dependencies, pkg.devDependencies);
-if (deps.oxlint) process.stdout.write("oxlint");
-else if (deps.eslint) process.stdout.write("eslint");
+// По родительским package.json тоже: в монорепо dev-зависимости живут в корне.
+const fs = require("fs"), path = require("path");
+let dir = process.cwd(), tool = "";
+while (!tool) {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
+    const deps = Object.assign({}, pkg.dependencies, pkg.devDependencies);
+    if (deps.oxlint) tool = "oxlint"; else if (deps.eslint) tool = "eslint";
+  } catch (e) {}
+  const parent = path.dirname(dir);
+  if (parent === dir) break;
+  dir = parent;
+}
+process.stdout.write(tool);
 ')
 if [ -z "$LINT_TOOL" ]; then
-  echo "scripts/check: в package.json нет ни oxlint, ни eslint" >&2
+  echo "scripts/check: в package.json (и родительских) нет ни oxlint, ни eslint" >&2
   exit 1
 fi
 

@@ -13,9 +13,9 @@ else if (deps.eslint) process.stdout.write("eslint");
 ')
 
 if [ $# -gt 0 ]; then
-  npx prettier --write --ignore-unknown "$@"
+  npx prettier --write --log-level warn --ignore-unknown "$@"
   [ -n "$LINT_TOOL" ] && npx "$LINT_TOOL" --fix --no-error-on-unmatched-pattern "$@" >/dev/null 2>&1 || true
 else
-  npx prettier --write --ignore-unknown .
+  npx prettier --write --log-level warn --ignore-unknown .
   [ -n "$LINT_TOOL" ] && npx "$LINT_TOOL" --fix . >/dev/null 2>&1 || true
 fi

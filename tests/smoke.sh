@@ -87,6 +87,9 @@ assert_exit 0 "пропускает force-with-lease в ветку" g 'git push 
 assert_exit 0 "пропускает обычный push в main" g 'git push origin main'
 assert_exit 0 "пропускает git status" g 'git status'
 assert_exit 0 "пропускает пустую команду" run_hook guard.sh '{}'
+assert_exit 0 "не смотрит в строку echo" g 'echo \"git commit --no-verify\"'
+assert_exit 2 "ловит git после &&" g 'cd x && git commit --no-verify -m x'
+assert_exit 2 "ловит git в подоболочке" g '(git push -f origin main)'
 assert_exit 0 "не смотрит в тело heredoc" g 'cat > note.md <<EOF\nзапрещено git commit --no-verify и git push -f origin main\nEOF'
 assert_exit 2 "ловит git перед heredoc" g 'git commit --no-verify -F- <<EOF\nmsg\nEOF'
 
@@ -143,6 +146,23 @@ contains templates/process/spec-template.md 'ровно в одной задач
 echo "тексты инициализации и документация"
 contains commands/init.md '@types/node' && ok "init: ставит @types/node для astro с vitest" || bad "init: нет @types/node"
 contains commands/init.md 'AGENTS.md' && ok "init: решение про AGENTS.md от генератора" || bad "init: нет решения про AGENTS.md"
+contains commands/init.md 'py.typed' && ok "init: py.typed для python" || bad "init: нет py.typed для python"
+contains commands/init.md 'command -v uv' && ok "init: проверяет наличие uv" || bad "init: не проверяет uv"
+contains commands/init.md 'workspaces' && ok "init: workspaces → monorepo" || bad "init: не распознаёт workspaces"
+contains commands/init.md 'в корне проекта' && ok "init: предупреждает про Stop-хук вне корня сессии" || bad "init: нет предупреждения про Stop-хук"
+contains skills/tdd/SKILL.md 'docstring' && ok "tdd: маркер в docstring/комментарии для pytest и XCTest" || bad "tdd: нет формы маркера для pytest/XCTest"
+contains skills/tdd/SKILL.md 'заглушка' && ok "tdd: заглушка перед красным тестом в компилируемом коде" || bad "tdd: нет правила про заглушку"
+contains templates/base/CLAUDE.local.md '/review' && bad "CLAUDE.local.md: ссылается на /review, которого нет" || ok "CLAUDE.local.md: без /review"
+for f in templates/node/tsconfig.json templates/swift-ios/project.yml templates/swift-ios/App.swift templates/swift-ios/gitignore; do
+  [ -f "$KIT/$f" ] && ok "есть $f" || bad "нет $f"
+done
+python3 -m json.tool "$KIT/templates/node/tsconfig.json" >/dev/null && ok "tsconfig шаблона node валиден" || bad "tsconfig шаблона node невалиден"
+grep -q '{{Name}}' "$KIT/templates/swift-ios/project.yml" && ok "project.yml: плейсхолдер {{Name}}" || bad "project.yml: нет {{Name}}"
+grep -q 'setup-uv@v5' "$KIT/templates/python/ci.yml" && bad "python ci.yml: устаревший setup-uv@v5" || ok "python ci.yml: setup-uv не v5"
+grep -q -- '--log-level warn' "$KIT/templates/node/scripts/fix" && ok "node fix: prettier молчит" || bad "node fix: prettier шумит"
+for f in commands/spec.md commands/init.md; do
+  grep -qE '^#+ .*\$ARGUMENTS' "$KIT/$f" && bad "$f: \$ARGUMENTS в заголовке" || ok "$f: \$ARGUMENTS не в заголовках"
+done
 contains commands/verify.md 'lock-файлы' && ok "verify: инфраструктура не считается расхождением" || bad "verify: нет списка инфраструктурных файлов"
 contains templates/base/CLAUDE.md '## Внешние материалы' && ok "CLAUDE.md шаблона: секция про внешние материалы" || bad "CLAUDE.md шаблона: нет секции про внешние материалы"
 contains templates/astro/ci.yml 'playwright install' && ok "astro ci.yml: подсказка про браузер Playwright" || bad "astro ci.yml: нет подсказки про Playwright"

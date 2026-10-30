@@ -4,17 +4,26 @@ set -eo pipefail
 cd "$(dirname "$0")/.."
 
 LINT_TOOL=$(node -e '
-let pkg = {};
-try { pkg = require("./package.json"); } catch (e) {}
-const deps = Object.assign({}, pkg.dependencies, pkg.devDependencies);
-if (deps.oxlint) process.stdout.write("oxlint");
-else if (deps.eslint) process.stdout.write("eslint");
+// По родительским package.json тоже: в монорепо dev-зависимости живут в корне.
+const fs = require("fs"), path = require("path");
+let dir = process.cwd(), tool = "";
+while (!tool) {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
+    const deps = Object.assign({}, pkg.dependencies, pkg.devDependencies);
+    if (deps.oxlint) tool = "oxlint"; else if (deps.eslint) tool = "eslint";
+  } catch (e) {}
+  const parent = path.dirname(dir);
+  if (parent === dir) break;
+  dir = parent;
+}
+process.stdout.write(tool);
 ')
 
 if [ $# -gt 0 ]; then
-  npx prettier --write --ignore-unknown "$@"
+  npx prettier --write --log-level warn --ignore-unknown "$@"
   [ -n "$LINT_TOOL" ] && npx "$LINT_TOOL" --fix --no-error-on-unmatched-pattern "$@" >/dev/null 2>&1 || true
 else
-  npx prettier --write --ignore-unknown .
+  npx prettier --write --log-level warn --ignore-unknown .
   [ -n "$LINT_TOOL" ] && npx "$LINT_TOOL" --fix . >/dev/null 2>&1 || true
 fi
