@@ -10,8 +10,8 @@
 ## Цикл
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/cycle-dark.svg">
-  <img alt="Цикл: /spec, человек утверждает спеку, /work с хуками check и test, /verify, человек читает отчёт, squash в main" src="docs/cycle-light.svg" width="100%">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/cycle-dark.svg">
+  <img alt="Цикл: /spec, человек утверждает спеку, /work с хуками check и test, /verify, человек читает отчёт, squash в main" src="docs/img/cycle-light.svg" width="100%">
 </picture>
 
 Человек нужен в двух точках: утвердить спеку и прочитать отчёт
@@ -172,8 +172,8 @@ claude plugin update agent-kit@agent-kit
 5. GitHub необязателен. Новый гейт — только после реального дефекта,
    который он поймал бы.
 
-История решений и этапы — [docs/plan.md](docs/plan.md), заметки обкаток —
-`docs/trial-*.md`.
+История решений и этапы — [docs/plan.md](docs/plan.md), итоги обкаток —
+[docs/trials.md](docs/trials.md).
 
 ## Разработка кита
 
