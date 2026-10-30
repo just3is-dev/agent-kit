@@ -3,11 +3,12 @@ description: Подключить проект к agent-kit — контракт
 argument-hint: "[путь] [--local]"
 ---
 
-Аргумент: `$ARGUMENTS` (путь и/или `--local`).
-Подключи проект к процессу agent-kit. Шаблоны: `${CLAUDE_PLUGIN_ROOT}/templates/`.
-`--local` — чужой проект: те же файлы, но ничего не попадает в git (пути
-добавляются в `.git/info/exclude`), `CLAUDE.local.md` вместо `CLAUDE.md`,
-CI не трогается.
+Подключи проект к процессу agent-kit; аргумент `$ARGUMENTS` — путь и/или
+`--local`. Шаблоны: `${CLAUDE_PLUGIN_ROOT}/templates/`.
+`--local` — чужой проект: те же файлы, но ни один tracked-файл не меняется
+и ничего не попадает в git: пути — в `.git/info/exclude`, `CLAUDE.local.md`
+вместо `CLAUDE.md`, CI, `.gitignore` и манифест зависимостей не трогаются;
+правила проекта (CONTRIBUTING, свой CLAUDE.md) приоритетнее наших.
 
 1. **Осмотрись.** Директория — из аргумента или текущая. Определи, пустая
    она или с кодом, есть ли git, какой стек по маркерам: `workspaces` в
@@ -19,20 +20,18 @@ CI не трогается.
    стек, название и одно предложение описания.
 
 2. **Пустой проект — каркас штатным генератором**, не выдумывай структуру:
-   `npx create-next-app@latest`, `npx @nestjs/cli new`,
-   `npm create astro@latest -- --template minimal --typescript strict
-   --no-git --yes`. Библиотека или CLI на node — `npm init -y`,
-   `templates/node/tsconfig.json`, dev-зависимости typescript,
-   `@types/node`, oxlint, prettier, vitest. Python — сначала `command -v uv`
-   (нет — остановись, предложи `brew install uv`), затем
+   `npx create-next-app@latest`, `npx @nestjs/cli new`, `npm create
+   astro@latest -- --template minimal --typescript strict --no-git --yes`;
+   node-библиотека или CLI — `npm init -y`, `templates/node/tsconfig.json`,
+   dev-зависимости typescript, `@types/node`, oxlint, prettier, vitest;
+   python — `command -v uv` (нет — остановись, предложи `brew install uv`),
    `uv init --package --vcs none --author-from none --name <имя>
-   --description <описание>` и пустой `src/<пакет>/py.typed`: без него
-   mypy не видит типов своего пакета в тестах. Флаги неинтерактивные.
-   Удали вложенные `.git`, которые создают генераторы. Для `swift-ios`
-   генератора нет: `templates/swift-ios/project.yml` → `project.yml`,
-   `App.swift` → `<Name>/App.swift`, замени `{{Name}}` и `{{BundleIdPrefix}}`
-   (из вопроса или `dev.local`), затем `xcodegen generate`. `.xcodeproj`
-   в git не хранится: его пересобирает `scripts/test`.
+   --description <описание>` и пустой `src/<пакет>/py.typed`, без него mypy
+   не видит типов пакета в тестах; swift-ios — `templates/swift-ios/project.yml`
+   → `project.yml`, `App.swift` → `<Name>/App.swift`, замени `{{Name}}` и
+   `{{BundleIdPrefix}}` (из вопроса или `dev.local`), `xcodegen generate`;
+   `.xcodeproj` в git не хранится, его пересобирает `scripts/test`. Флаги
+   неинтерактивные. Удали вложенные `.git`, которые создают генераторы.
 
 3. **Наложи шаблоны.** Для каждого файла: нет в проекте — создай; есть и
    совпадает — пропусти молча; есть и отличается — не трогай, покажи
@@ -41,10 +40,13 @@ CI не трогается.
      в каждый пакет скрипты его стека, в корень — диспетчер из
      `templates/monorepo/`; файлы вне пакетов никто не проверяет. Для
      `swift-ios` ещё `swift-format` → `.swift-format`.
+   - стека нет в шаблонах — скрипты по образцу ближайшего, та же семантика
+     (`check [файлы]` быстрый, `test` без тестов не провал, `fix` молчалив),
+     маркер `# agent-kit/<стек>` первой строкой комментария — для `/sync`.
    - `templates/<стек>/ci.yml` → `.github/workflows/ci.yml`, только если в
      `.github/workflows/` пусто. Не при `--local`.
-   - `templates/base/gitignore` и `templates/<стек>/gitignore`, если есть,
-     → допиши в `.gitignore` недостающие строки.
+   - `templates/base/gitignore` и `templates/<стек>/gitignore` → допиши в
+     `.gitignore` недостающие строки. Не при `--local`.
    - `AGENTS.md` от генератора оставь; в начало `CLAUDE.md` строку «Правила
      для агентов — в этом файле; `AGENTS.md` сгенерирован стеком, его не редактируем»;
    - `templates/base/CLAUDE.md` → `CLAUDE.md`, заполни `{{плейсхолдеры}}`;
@@ -53,28 +55,26 @@ CI не трогается.
      добавь в конец только секции «Контракт» и «Процесс». При `--local` —
      `templates/base/CLAUDE.local.md` → `CLAUDE.local.md`.
    - `templates/base/backlog.md` → `docs/backlog.md`.
-   - При `--local` каждый созданный путь допиши в `.git/info/exclude`
-     (`scripts/`, `CLAUDE.local.md`, `docs/`, `.swift-format`).
+   - При `--local` созданные пути — в `.git/info/exclude` точечно: `scripts/`,
+     `CLAUDE.local.md`, `docs/specs/`, `docs/adr/`, `docs/backlog.md`, `.swift-format`.
 
-4. **Другой стек.** Ближайший шаблон за образец, та же семантика: `check
-   [файлы]` быстрый, `test` без тестов не провал, `fix` молчалив. Первая
-   строка комментария — `# agent-kit/<стек>`, по ней работает `/sync`.
-
-5. **Проверь контракт вживую.** `./scripts/check` и `./scripts/test` должны
-   пройти из корня. Поставь недостающие dev-зависимости тем менеджером,
-   что уже в проекте: для node как минимум typescript, prettier, линтер и
-   тест-раннер из тех, что уже выбрал генератор; для astro — `@astrojs/check`,
+4. **Проверь контракт вживую**, с красным не завершай: `./scripts/check` и
+   `./scripts/test` проходят из корня. Поставь dev-зависимости менеджером,
+   что уже в проекте: для node — typescript, prettier, линтер и тест-раннер
+   из тех, что уже выбрал генератор; для astro — `@astrojs/check`,
    `typescript`, `prettier`, `prettier-plugin-astro`, линтер по желанию;
    если тесты на vitest читают файлы или `dist/` через `node:*` — ещё
-   `@types/node` и `"types": ["node"]` в tsconfig пакета не в корне. В
-   monorepo dev-зависимости могут жить в корне: скрипты ищут их по
-   родительским `package.json`. Не завершай инициализацию с красным контрактом.
+   `@types/node` и `"types": ["node"]` в tsconfig пакета не в корне (в
+   monorepo скрипты ищут инструменты и по родительским `package.json`).
+   При `--local` ничего не ставь: нет prettier — `fix` молчит; нет линтера
+   или раннера — скрипты без них по п. 3, и скажи об этом.
 
-6. **Git.** Нет репозитория — `git init -b main` и коммит `chore: подключить
-   agent-kit`. Есть — коммит оставь пользователю. GitHub не создавай; нет
-   remote — упомяни `gh repo create`.
+5. **Git.** `./scripts/fix`, затем: нет репозитория — `git init -b main` и
+   коммит `chore: подключить agent-kit`; есть — коммит оставь пользователю.
+   GitHub не создавай; нет remote — упомяни `gh repo create`.
 
-7. **Отчёт:** что создано, что пропущено как совпадающее, где diff с
+6. **Отчёт:** что создано, что пропущено как совпадающее, где diff с
    шаблоном; хуки активны: check после правки — сразу, test перед концом
-   хода — только когда сессия открыта в корне проекта (init запускался с
-   путём — открой сессию в папке проекта); дальше `/spec <идея>`.
+   хода — только когда сессия открыта в корне проекта (init с путём —
+   открой сессию в папке проекта, при `--local` обязательно: иначе
+   `CLAUDE.local.md` не в контексте); дальше `/spec <идея>`.

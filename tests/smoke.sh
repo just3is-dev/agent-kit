@@ -153,9 +153,22 @@ contains commands/init.md 'в корне проекта' && ok "init: преду
 contains skills/tdd/SKILL.md 'docstring' && ok "tdd: маркер в docstring/комментарии для pytest и XCTest" || bad "tdd: нет формы маркера для pytest/XCTest"
 contains skills/tdd/SKILL.md 'заглушка' && ok "tdd: заглушка перед красным тестом в компилируемом коде" || bad "tdd: нет правила про заглушку"
 contains templates/base/CLAUDE.local.md '/review' && bad "CLAUDE.local.md: ссылается на /review, которого нет" || ok "CLAUDE.local.md: без /review"
-for f in templates/node/tsconfig.json templates/swift-ios/project.yml templates/swift-ios/App.swift templates/swift-ios/gitignore; do
+for f in templates/node/tsconfig.json templates/swift-ios/project.yml templates/swift-ios/App.swift templates/swift-ios/gitignore \
+         templates/node/gitignore templates/astro/gitignore templates/python/gitignore templates/monorepo/gitignore; do
   [ -f "$KIT/$f" ] && ok "есть $f" || bad "нет $f"
 done
+grep -q 'node_modules' "$KIT/templates/base/gitignore" && bad "base/gitignore: стековый мусор в общем списке" || ok "base/gitignore: только общее"
+contains commands/init.md 'docs/specs/' && ok "init --local: exclude точечно, не docs/ целиком" || bad "init --local: docs/ целиком в exclude"
+contains commands/init.md 'ничего не ставь' && ok "init --local: не ставит зависимости" || bad "init --local: ставит зависимости в чужой манифест"
+contains commands/work.md 'CONTRIBUTING' && ok "work: правила чужого проекта приоритетнее" || bad "work: не знает про чужие конвенции"
+contains commands/work.md './scripts/fix' && ok "work: fix перед коммитом" || bad "work: fix не вызывается"
+contains commands/verify.md 'текст PR' && ok "verify: текст PR для чужого проекта" || bad "verify: нет текста PR для чужого проекта"
+contains commands/spec.md 'не коммить' && ok "spec: спека вне git не коммитится" || bad "spec: коммит спеки в чужом проекте"
+contains commands/sync.md 'lib.sh' && ok "sync: сравнивает lib.sh" || bad "sync: не сравнивает lib.sh"
+contains commands/sync.md 'перенести локальные правки' && ok "sync: вариант с переносом локальных правок" || bad "sync: нет переноса локальных правок"
+contains commands/sync.md 'chore: обновить скрипты' && ok "sync: коммит описан" || bad "sync: git после обновления не описан"
+grep -q 'deps.prettier' "$KIT/templates/node/scripts/fix" && grep -q 'deps.prettier' "$KIT/templates/astro/scripts/fix" && ok "fix: prettier только из зависимостей" || bad "fix: npx prettier без проверки зависимостей"
+contains README.md 'plugin update' && ok "README: обновление кэша плагина" || bad "README: нет про plugin update"
 python3 -m json.tool "$KIT/templates/node/tsconfig.json" >/dev/null && ok "tsconfig шаблона node валиден" || bad "tsconfig шаблона node невалиден"
 grep -q '{{Name}}' "$KIT/templates/swift-ios/project.yml" && ok "project.yml: плейсхолдер {{Name}}" || bad "project.yml: нет {{Name}}"
 grep -q 'setup-uv@v5' "$KIT/templates/python/ci.yml" && bad "python ci.yml: устаревший setup-uv@v5" || ok "python ci.yml: setup-uv не v5"

@@ -1,29 +1,37 @@
 #!/usr/bin/env bash
 # agent-kit/node: автоформат + авто-исправимый линт. Молча правит что может.
+# Инструменты — из package.json, своего или родительского (монорепо).
 set -eo pipefail
 cd "$(dirname "$0")/.."
 
-LINT_TOOL=$(node -e '
-// По родительским package.json тоже: в монорепо dev-зависимости живут в корне.
+tools=$(node -e '
 const fs = require("fs"), path = require("path");
-let dir = process.cwd(), tool = "";
-while (!tool) {
+let dir = process.cwd(), lint = "", prettier = "";
+for (;;) {
   try {
     const pkg = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
     const deps = Object.assign({}, pkg.dependencies, pkg.devDependencies);
-    if (deps.oxlint) tool = "oxlint"; else if (deps.eslint) tool = "eslint";
+    if (!lint && deps.oxlint) lint = "oxlint"; else if (!lint && deps.eslint) lint = "eslint";
+    if (deps.prettier) prettier = "prettier";
   } catch (e) {}
+  if (lint && prettier) break;
   const parent = path.dirname(dir);
   if (parent === dir) break;
   dir = parent;
 }
-process.stdout.write(tool);
+process.stdout.write(lint + " " + prettier);
 ')
+LINT_TOOL=${tools% *}
+PRETTIER=${tools#* }
+
+# Без prettier в зависимостях форматирование пропускается: npx не должен
+# ставить его из сети, особенно в чужой проект (/init --local).
+fmt() { [ -n "$PRETTIER" ] || return 0; npx prettier --write --log-level warn --ignore-unknown "$@"; }
 
 if [ $# -gt 0 ]; then
-  npx prettier --write --log-level warn --ignore-unknown "$@"
+  fmt "$@"
   [ -n "$LINT_TOOL" ] && npx "$LINT_TOOL" --fix --no-error-on-unmatched-pattern "$@" >/dev/null 2>&1 || true
 else
-  npx prettier --write --log-level warn --ignore-unknown .
+  fmt .
   [ -n "$LINT_TOOL" ] && npx "$LINT_TOOL" --fix . >/dev/null 2>&1 || true
 fi
